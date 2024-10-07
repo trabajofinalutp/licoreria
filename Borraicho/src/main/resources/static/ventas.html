@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Ventas - Licorería</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+</head>
+<body>
+<div class="container-fluid">
+    <div class="row">
+        <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-dark sidebar">
+            <div class="position-sticky">
+                <h5 class="text-white p-3">Menú Principal</h5>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="index.html">Inicio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="inventario.html">Inventario</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="producto.html">Stock</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="ventas.html">Ventas</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="usuario.html">Personal</a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <button class="btn btn-outline-secondary" id="toggleButton">
+                <i class="bi bi-chevron-left" id="toggleIcon"></i>
+            </button>
+            <h1 class="h2 mt-4">Gestión de Ventas</h1>
+
+            <form class="mt-4" id="ventaForm">
+                <input type="hidden" id="idVenta">
+                <div class="mb-3">
+                    <label for="cliente" class="form-label">Cliente</label>
+                    <select class="form-select" id="cliente" required>
+                        <!-- Lista de clientes -->
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="usuario" class="form-label">Usuario</label>
+                    <select class="form-select" id="usuario" required>
+                        <!-- Lista de usuarios -->
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="fechaVenta" class="form-label">Fecha de Venta</label>
+                    <input type="date" class="form-control" id="fechaVenta" required>
+                </div>
+                <div class="mb-3">
+                    <label for="total" class="form-label">Total</label>
+                    <input type="number" class="form-control" id="total" step="0.01" required>
+                </div>
+                <button type="submit" class="btn btn-primary" id="submitButton">Registrar Venta</button>
+            </form>
+
+            <h2 class="mt-4">Lista de Ventas</h2>
+            <table class="table table-striped mt-3">
+                <thead>
+                <tr>
+                    <th>ID Venta</th>
+                    <th>Cliente</th>
+                    <th>Usuario</th>
+                    <th>Fecha</th>
+                    <th>Total</th>
+                    <th>Acciones</th>
+                </tr>
+                </thead>
+                <tbody id="ventasTableBody">
+                <!-- Aquí se mostrarán los datos de las ventas -->
+                </tbody>
+            </table>
+            <button class="btn btn-primary mt-4" onclick="location.href='index.html'">Inicio</button>
+        </main>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function() {
+        fetchVentas();
+        fetchClientes();
+        fetchUsuarios();
+
+        // Manejar la sumisión del formulario
+        $('#ventaForm').on('submit', function(e) {
+            e.preventDefault();
+            const idVenta = $('#idVenta').val();
+            if (idVenta) {
+                updateVenta(idVenta);
+            } else {
+                createVenta();
+            }
+        });
+
+        // Limpiar el formulario
+        $('#resetButton').on('click', function() {
+            $('#ventaForm')[0].reset();
+            $('#idVenta').val('');
+            $('#submitButton').text('Registrar Venta');
+        });
+
+        // Obtener la lista de ventas
+        function fetchVentas() {
+            $.get('/venta', function(ventas) {
+                let ventasHtml = '';
+                ventas.forEach(venta => {
+                    ventasHtml += `
+                        <tr>
+                            <td>${venta.idVenta}</td>
+                            <td>${venta.cliente.nombre}</td>
+                            <td>${venta.usuario.nombre}</td>
+                            <td>${venta.fechaVenta}</td>
+                            <td>${venta.total}</td>
+                            <td>
+                                <button class="btn btn-info btn-sm" onclick="editVenta(${venta.idVenta})">Editar</button>
+                                <button class="btn btn-danger btn-sm" onclick="deleteVenta(${venta.idVenta})">Eliminar</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                $('#ventasTableBody').html(ventasHtml);
+            });
+        }
+
+        // Obtener la lista de clientes
+        function fetchClientes() {
+            $.get('/clientes', function(clientes) {
+                let clientesHtml = '<option selected disabled>Seleccione un cliente</option>';
+                clientes.forEach(cliente => {
+                    clientesHtml += `<option value="${cliente.idCliente}">${cliente.nombre}</option>`;
+                });
+                $('#cliente').html(clientesHtml);
+            });
+        }
+
+        // Obtener la lista de usuarios
+        function fetchUsuarios() {
+            $.get('/usuario', function(usuarios) {
+                let usuariosHtml = '<option selected disabled>Seleccione un usuario</option>';
+                usuarios.forEach(usuario => {
+                    usuariosHtml += `<option value="${usuario.idUsuario}">${usuario.nombreUsuario}</option>`;
+                });
+                $('#usuario').html(usuariosHtml);
+            });
+        }
+
+        // Crear una nueva venta
+        function createVenta() {
+            const venta = {
+                fechaVenta: $('#fechaVenta').val(),
+                total: $('#total').val()
+            };
+
+            const idCliente = $('#cliente').val();
+            const idUsuario = $('#usuario').val();
+
+            $.ajax({
+                url: '/venta',
+                type: 'POST',
+                data: JSON.stringify(venta),
+                contentType: 'application/json; charset=utf-8',
+                data: { idCliente, idUsuario },
+                success: function(response) {
+                    fetchVentas();
+                    $('#ventaForm')[0].reset();
+                }
+            });
+        }
+
+        // Editar una venta
+        window.editVenta = function(idVenta) {
+            $.get(`/venta/${idVenta}`, function(venta) {
+                $('#idVenta').val(venta.idVenta);
+                $('#cliente').val(venta.cliente.idCliente);
+                $('#usuario').val(venta.usuario.idUsuario);
+                $('#fechaVenta').val(venta.fechaVenta);
+                $('#total').val(venta.total);
+                $('#submitButton').text('Actualizar Venta');
+            });
+        }
+
+        // Actualizar una venta
+        function updateVenta(idVenta) {
+            const venta = {
+                idVenta: idVenta,
+                fechaVenta: $('#fechaVenta').val(),
+                total: $('#total').val()
+            };
+
+            const idCliente = $('#cliente').val();
+            const idUsuario = $('#usuario').val();
+
+            $.ajax({
+                url: `/venta/${idVenta}`,
+                type: 'PUT',
+                data: JSON.stringify(venta),
+                contentType: 'application/json; charset=utf-8',
+                data: { idCliente, idUsuario },
+                success: function(response) {
+                    fetchVentas();
+                    $('#ventaForm')[0].reset();
+                    $('#idVenta').val('');
+                    $('#submitButton').text('Registrar Venta');
+                }
+            });
+        }
+
+        // Eliminar una venta
+        window.deleteVenta = function(idVenta) {
+            $.ajax({
+                url: `/venta/${idVenta}`,
+                type: 'DELETE',
+                success: function(response) {
+                    fetchVentas();
+                }
+            });
+        }
+
+        const toggleButton = document.getElementById('toggleButton');
+        const sidebar = document.getElementById('sidebarMenu');
+        const toggleIcon = document.getElementById('toggleIcon');
+
+        toggleButton.addEventListener('click', () => {
+            sidebar.classList.toggle('collapse');
+            toggleIcon.classList.toggle('bi-chevron-right');
+            toggleIcon.classList.toggle('bi-chevron-left');
+        });
+    });
+</script>
+</body>
+</html>

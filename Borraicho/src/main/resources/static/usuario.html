@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Usuarios - Licorería</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+</head>
+<body>
+<div class="container-fluid">
+    <div class="row">
+        <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-dark sidebar">
+            <div class="position-sticky">
+                <h5 class="text-white p-3">Menú Principal</h5>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="index.html">Inicio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="inventario.html">Inventario</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="producto.html">Stock</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="ventas.html">Ventas</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="usuario.html">Personal</a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <button class="btn btn-outline-secondary" id="toggleButton">
+                <i class="bi bi-chevron-left" id="toggleIcon"></i>
+            </button>
+            <h1 class="h2 mt-4">Gestión de Usuarios</h1>
+
+            <form class="mt-4" id="usuarioForm">
+                <input type="hidden" id="idUsuario">
+                <div class="mb-3">
+                    <label for="nombre_usuario" class="form-label">Nombre de Usuario</label>
+                    <input type="text" class="form-control" id="nombre_usuario" placeholder="Ingrese el nombre de usuario" required>
+                </div>
+                <div class="mb-3">
+                    <label for="correo_usuario" class="form-label">Correo Electrónico</label>
+                    <input type="email" class="form-control" id="correo_usuario" placeholder="Ingrese el correo electrónico" required>
+                </div>
+                <div class="mb-3">
+                    <label for="contrasena" class="form-label">Contraseña</label>
+                    <input type="password" class="form-control" id="contrasena" placeholder="Ingrese la contraseña" required>
+                </div>
+                <div class="mb-3">
+                    <label for="rol_usuario" class="form-label">Rol de Usuario</label>
+                    <select class="form-select" id="rol_usuario" required>
+                        <option selected disabled>Seleccione un rol</option>
+                        <option value="Admin">Admin</option>
+                        <option value="Vendedor">Vendedor</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary" id="submitButton">Agregar Usuario</button>
+            </form>
+
+            <h2 class="mt-4">Lista de Usuarios</h2>
+            <table class="table table-striped mt-3">
+                <thead>
+                <tr>
+                    <th>Nombre de Usuario</th>
+                    <th>Correo Electrónico</th>
+                    <th>Rol</th>
+                    <th>Fecha de Registro</th>
+                    <th>Acciones</th>
+                </tr>
+                </thead>
+                <tbody id="usuariosTableBody">
+                <!-- Aquí se mostrarán los datos de los usuarios -->
+                </tbody>
+            </table>
+        </main>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function() {
+        fetchUsuarios();
+
+        // Manejar la sumisión del formulario
+        $('#usuarioForm').on('submit', function(e) {
+            e.preventDefault();
+            const idUsuario = $('#idUsuario').val();
+            if (idUsuario) {
+                updateUsuario(idUsuario);
+            } else {
+                createUsuario();
+            }
+        });
+
+        // Limpiar el formulario
+        $('#resetButton').on('click', function() {
+            $('#usuarioForm')[0].reset();
+            $('#idUsuario').val('');
+            $('#submitButton').text('Agregar Usuario');
+        });
+
+        // Obtener la lista de usuarios
+        function fetchUsuarios() {
+            $.get('/usuario', function(usuarios) {
+                let usuariosHtml = '';
+                usuarios.forEach(usuario => {
+                    usuariosHtml += `
+                        <tr>
+                            <td>${usuario.nombreUsuario}</td>
+                            <td>${usuario.correoUsuario}</td>
+                            <td>${usuario.rolUsuario}</td>
+                            <td>${usuario.fechaRegistro}</td>
+                            <td>
+                                <button class="btn btn-info btn-sm" onclick="editUsuario(${usuario.idUsuario})">Editar</button>
+                                <button class="btn btn-danger btn-sm" onclick="deleteUsuario(${usuario.idUsuario})">Eliminar</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                $('#usuariosTableBody').html(usuariosHtml);
+            });
+        }
+
+        // Crear un nuevo usuario
+        function createUsuario() {
+            const usuario = {
+                nombreUsuario: $('#nombre_usuario').val(),
+                correoUsuario: $('#correo_usuario').val(),
+                contrasena: $('#contrasena').val(),
+                rolUsuario: $('#rol_usuario').val()
+            };
+
+            $.ajax({
+                url: '/usuario',
+                type: 'POST',
+                data: JSON.stringify(usuario),
+                contentType: 'application/json; charset=utf-8',
+                success: function(response) {
+                    fetchUsuarios();
+                    $('#usuarioForm')[0].reset();
+                }
+            });
+        }
+
+        // Editar un usuario
+        window.editUsuario = function(idUsuario) {
+            $.get(`/usuario/${idUsuario}`, function(usuario) {
+                $('#idUsuario').val(usuario.idUsuario);
+                $('#nombre_usuario').val(usuario.nombreUsuario);
+                $('#correo_usuario').val(usuario.correoUsuario);
+                $('#contrasena').val(usuario.contrasena);
+                $('#rol_usuario').val(usuario.rolUsuario);
+                $('#submitButton').text('Actualizar Usuario');
+            });
+        }
+
+        // Actualizar un usuario
+        function updateUsuario(idUsuario) {
+            const usuario = {
+                idUsuario: idUsuario,
+                nombreUsuario: $('#nombre_usuario').val(),
+                correoUsuario: $('#correo_usuario').val(),
+                contrasena: $('#contrasena').val(),
+                rolUsuario: $('#rol_usuario').val()
+            };
+
+            $.ajax({
+                url: `/usuario/${idUsuario}`,
+                type: 'PUT',
+                data: JSON.stringify(usuario),
+                contentType: 'application/json; charset=utf-8',
+                success: function(response) {
+                    fetchUsuarios();
+                    $('#usuarioForm')[0].reset();
+                    $('#idUsuario').val('');
+                    $('#submitButton').text('Agregar Usuario');
+                }
+            });
+        }
+
+        // Eliminar un usuario
+        window.deleteUsuario = function(idUsuario) {
+            $.ajax({
+                url: `/usuario/${idUsuario}`,
+                type: 'DELETE',
+                success: function(response) {
+                    fetchUsuarios();
+                }
+            });
+        }
+
+        const toggleButton = document.getElementById('toggleButton');
+        const sidebar = document.getElementById('sidebarMenu');
+        const toggleIcon = document.getElementById('toggleIcon');
+
+        toggleButton.addEventListener('click', () => {
+            sidebar.classList.toggle('collapse');
+            toggleIcon.classList.toggle('bi-chevron-right');
+            toggleIcon.classList.toggle('bi-chevron-left');
+        });
+    });
+</script>
+</body>
+</html>
