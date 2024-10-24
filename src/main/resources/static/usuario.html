@@ -39,7 +39,7 @@
                 </ul>
             </div>
         </nav>
-
+        
         <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
             <button class="btn btn-outline-secondary" id="toggleButton">
                 <i class="bi bi-chevron-left" id="toggleIcon"></i>
@@ -216,16 +216,17 @@
                 }
             });
         }
+    });
+</script>
+<script>
+    const toggleButton = document.getElementById('toggleButton');
+    const sidebar = document.getElementById('sidebarMenu');
+    const toggleIcon = document.getElementById('toggleIcon');
 
-        const toggleButton = document.getElementById('toggleButton');
-        const sidebar = document.getElementById('sidebarMenu');
-        const toggleIcon = document.getElementById('toggleIcon');
-
-        toggleButton.addEventListener('click', () => {
-            sidebar.classList.toggle('collapse');
-            toggleIcon.classList.toggle('bi-chevron-right');
-            toggleIcon.classList.toggle('bi-chevron-left');
-        });
+    toggleButton.addEventListener('click', function() {
+        sidebar.classList.toggle('collapse');
+        toggleIcon.classList.toggle('bi-chevron-left');
+        toggleIcon.classList.toggle('bi-chevron-right');
     });
 </script>
 </body>
