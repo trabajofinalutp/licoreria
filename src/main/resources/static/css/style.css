@@ -1,0 +1,102 @@
+html, body {
+    height: 100%;
+    margin: 0;
+    background-color: #f8f9fa;
+}
+
+.titulo {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.sidebar {
+    height: 100vh;
+    position: fixed;
+    z-index: 100;
+    overflow-y: auto;
+    transition: width 0.3s;
+    width: 250px; 
+}
+
+.sidebar.collapse {
+    width: 0;
+    padding: 0;
+}
+
+.sidebar .nav-link.active {
+    background-color: #495057;
+}
+
+h1 {
+    color: #343a40;
+    margin-bottom: 20px;
+}
+
+main {
+    margin-left: 250px; 
+    padding: 20px;
+    transition: margin-left 0.3s, width 0.3s;
+    width: calc(100% - 250px); 
+}
+
+.sidebar.collapse + main {
+    margin-left: 0;
+    width: 100%; 
+}
+
+#toggleButton {
+    position: fixed;
+    z-index: 200;
+    top: 20px;
+    left: 10px;
+}
+
+.sidebar .position-sticky h5 {
+    margin-top: 60px;
+}
+
+.header-logo {
+    width: 40px; /* Ajusta el tamaño según tus necesidades */
+    margin-left: 50px; /* Espacio a la izquierda para separar del título */
+}
+.card {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border: none; /* Para quitar el borde predeterminado */
+}
+
+.card-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+/* Media queries para ajustar el margen según el tamaño de pantalla */
+@media (max-width: 768px) {
+    main {
+        margin-left: 0; 
+    }
+}
+@media (max-width: 576px) {
+    .card-container .col-md-3 {
+        flex: 0 0 100%; /* Cada tarjeta ocupará el 100% en pantallas pequeñas */
+    }
+}
+
+.nav-link:hover {
+    background-color: #6c757d; /* Un color más claro al pasar el mouse */
+}
+
+.btn-primary:hover {
+    background-color: #0056b3; /* Un tono más oscuro al pasar el mouse */
+}
+.imagen-esquina {
+    position: fixed; 
+    bottom: 20px; 
+    right: 20px; 
+    width: 550px; 
+    opacity: 0.7; 
+    transition: opacity 0.3s; 
+    z-index: 0;
+}

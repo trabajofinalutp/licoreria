@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Proveedores - Licorería</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+</head>
+<body>
+<div class="container-fluid">
+    <div class="row">
+        <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-dark sidebar">
+            <div class="position-sticky">
+                <h5 class="text-white p-3">Menú Principal</h5>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="index.html">Inicio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="inventario.html">Inventario</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="producto.html">Productos</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="cliente.html">Clientes</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="proveedores.html">Proveedores</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="ventas.html">Ventas</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="usuario.html">Usuario</a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <button class="btn btn-outline-secondary" id="toggleButton">
+                <i class="bi bi-chevron-left" id="toggleIcon"></i>
+            </button>
+            <h1 class="h2 mt-4">Gestión de Proveedores</h1>
+            <section id="proveedores">
+                <div class="mt-4 mb-4">
+                    <form id="proveedorForm">
+                        <input type="hidden" id="idProveedor" name="idProveedor">
+                        <div class="form-group">
+                            <label for="nombreProveedor">Nombre del Proveedor</label>
+                            <input type="text" class="form-control" id="nombreProveedor" name="nombre" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="telefonoProveedor">Teléfono del Proveedor</label>
+                            <input type="number" class="form-control" id="telefonoProveedor" name="telefono" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="direccionProveedor">Dirección del Proveedor</label>
+                            <input type="text" class="form-control" id="direccionProveedor" name="direccion" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="correoProveedor">Correo del Proveedor</label>
+                            <input type="email" class="form-control" id="correoProveedor" name="email" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary" id="submitButton">Guardar</button>
+                        <button type="button" class="btn btn-secondary" id="resetButton">Limpiar</button>
+                    </form>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-striped" id="proveedoresTable">
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Teléfono</th>
+                            <th>Dirección</th>
+                            <th>Correo</th>
+                            <th>Acciones</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+</div>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const proveedorForm = document.getElementById("proveedorForm");
+        const idProveedor = document.getElementById("idProveedor");
+        const nombreProveedor = document.getElementById("nombreProveedor");
+        const telefonoProveedor = document.getElementById("telefonoProveedor");
+        const direccionProveedor = document.getElementById("direccionProveedor");
+        const correoProveedor = document.getElementById("correoProveedor");
+        const proveedoresTable = document.getElementById("proveedoresTable").getElementsByTagName("tbody")[0];
+        const resetButton = document.getElementById("resetButton");
+        const submitButton = document.getElementById("submitButton");
+        const apiUrl = "http://localhost:8080/proveedor";
+        fetchProveedores();
+        proveedorForm.addEventListener("submit", function(event) {
+            event.preventDefault();
+            const proveedor = {
+                idProveedor: idProveedor.value ? parseInt(idProveedor.value) : null,
+                nombre: nombreProveedor.value,
+                telefono: telefonoProveedor.value,
+                direccion: direccionProveedor.value,
+                email: correoProveedor.value,
+            };
+            if (idProveedor.value) {
+                actualizarProveedor(proveedor);
+            } else {
+                agregarProveedor(proveedor);
+            }
+        });
+        resetButton.addEventListener("click", limpiarFormulario);
+        function fetchProveedores() {
+            fetch(apiUrl)
+                .then(response => response.json())
+                .then(data => {
+                    proveedoresTable.innerHTML = "";
+                    data.forEach(proveedor => {
+                        const row = proveedoresTable.insertRow();
+                        row.insertCell(0).textContent = proveedor.idProveedor;
+                        row.insertCell(1).textContent = proveedor.nombre;
+                        row.insertCell(2).textContent = proveedor.telefono;
+                        row.insertCell(3).textContent = proveedor.direccion;
+                        row.insertCell(4).textContent = proveedor.email;
+                        const accionesCell = row.insertCell(5);
+                        const editButton = document.createElement("button");
+                        editButton.classList.add("btn", "btn-warning", "me-2");
+                        editButton.innerHTML = '<i class="bi bi-pencil"></i>';
+                        editButton.addEventListener("click", () => editarProveedor(proveedor));
+                        const deleteButton = document.createElement("button");
+                        deleteButton.classList.add("btn", "btn-danger");
+                        deleteButton.innerHTML = '<i class="bi bi-trash"></i>';
+                        deleteButton.addEventListener("click", () => eliminarProveedor(proveedor.idProveedor));
+                        accionesCell.appendChild(editButton);
+                        accionesCell.appendChild(deleteButton);
+                    });
+                })
+                .catch(error => console.error("Error al cargar los proveedores:", error));
+        }
+        function agregarProveedor(proveedor) {
+            fetch(apiUrl, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(proveedor)
+            })
+                .then(response => response.json())
+                .then(() => {
+                    fetchProveedores();
+                    limpiarFormulario();
+                })
+                .catch(error => console.error("Error al agregar el proveedor:", error));
+        }
+        function actualizarProveedor(proveedor) {
+            fetch(`${apiUrl}/${proveedor.idProveedor}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(proveedor)
+            })
+                .then(response => response.json())
+                .then(() => {
+                    fetchProveedores();
+                    limpiarFormulario();
+                })
+                .catch(error => console.error("Error al actualizar el proveedor:", error));
+        }
+        function eliminarProveedor(id) {
+            fetch(`${apiUrl}/${id}`, {
+                method: "DELETE"
+            })
+                .then(() => {
+                    fetchProveedores();
+                })
+                .catch(error => console.error("Error al eliminar el proveedor:", error));
+        }
+        function editarProveedor(proveedor) {
+            idProveedor.value = proveedor.idProveedor;
+            nombreProveedor.value = proveedor.nombre;
+            telefonoProveedor.value = proveedor.telefono;
+            direccionProveedor.value = proveedor.direccion;
+            correoProveedor.value = proveedor.email;
+            submitButton.textContent = "Actualizar";
+        }
+        function limpiarFormulario() {
+            idProveedor.value = "";
+            nombreProveedor.value = "";
+            telefonoProveedor.value = "";
+            direccionProveedor.value = "";
+            correoProveedor.value = "";
+            submitButton.textContent = "Guardar";
+        }
+    });
+</script>
+<script>
+    const toggleButton = document.getElementById('toggleButton');
+    const sidebar = document.getElementById('sidebarMenu');
+    const toggleIcon = document.getElementById('toggleIcon');
+    toggleButton.addEventListener('click', () => {
+        sidebar.classList.toggle('collapse');
+        toggleIcon.classList.toggle('bi-chevron-right');
+        toggleIcon.classList.toggle('bi-chevron-left');
+    });
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

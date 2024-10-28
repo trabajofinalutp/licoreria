@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Clientes - Licorería</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="container-fluid">
+    <div class="row">
+        <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-dark sidebar">
+            <div class="position-sticky">
+                <h5 class="text-white p-3">Menú Principal</h5>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="index.html">Inicio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="inventario.html">Inventario</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="producto.html">Productos</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="cliente.html">Clientes</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="proveedores.html">Proveedores</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="ventas.html">Ventas</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="usuario.html">Usuario</a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <button class="btn btn-outline-secondary" id="toggleButton">
+                <i class="bi bi-chevron-left" id="toggleIcon"></i>
+            </button>
+            <h1 class="h2 mt-4">Gestión de Clientes</h1>
+            <form class="mt-4" id="clienteForm">
+                <input type="hidden" id="idCliente">
+                <div class="mb-3">
+                    <label for="nombre" class="form-label">Nombre</label>
+                    <input type="text" class="form-control" id="nombre" required>
+                </div>
+                <div class="mb-3">
+                    <label for="edad" class="form-label">Edad</label>
+                    <input type="number" class="form-control" id="edad" required>
+                </div>
+                <button type="submit" class="btn btn-primary" id="submitButton">Guardar Cliente</button>
+                <button type="button" class="btn btn-secondary" id="resetButton">Limpiar</button>
+            </form>
+            <h2 class="mt-4">Lista de Clientes</h2>
+            <table class="table table-striped mt-3">
+                <thead>
+                <tr>
+                    <th>ID Cliente</th>
+                    <th>Nombre</th>
+                    <th>Edad</th>
+                    <th>Fecha de Registro</th>
+                    <th>Acciones</th>
+                </tr>
+                </thead>
+                <tbody id="clientesTableBody">
+                </tbody>
+            </table>
+            <button class="btn btn-primary mt-4" onclick="location.href='index.html'">Inicio</button>
+        </main>
+    </div>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const clienteForm = document.getElementById('clienteForm');
+        const clientesTableBody = document.getElementById('clientesTableBody');
+        const resetButton = document.getElementById('resetButton');
+        clienteForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const idCliente = document.getElementById('idCliente').value;
+            const nombre = document.getElementById('nombre').value;
+            const edad = document.getElementById('edad').value;
+            const cliente = { idCliente, nombre, edad }; // No incluir fecha_registro
+            try {
+                const method = idCliente ? 'PUT' : 'POST';
+                const endpoint = idCliente ? `/cliente/${idCliente}` : '/cliente';
+                const response = await fetch(endpoint, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(cliente)
+                });
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const savedCliente = await response.json();
+                if (!idCliente) {
+                    agregarFilaCliente(savedCliente);
+                } else {
+                    actualizarFilaCliente(savedCliente);
+                }
+                clienteForm.reset();
+            } catch (error) {
+                console.error('Error al guardar el cliente:', error);
+            }
+        });
+        resetButton.addEventListener('click', () => {
+            clienteForm.reset();
+        });
+        clientesTableBody.addEventListener('click', async (event) => {
+            const row = event.target.closest('tr');
+            const clienteId = row.getAttribute('data-id');
+            if (event.target.classList.contains('deleteButton')) {
+                try {
+                    const response = await fetch(`/cliente/${clienteId}`, {
+                        method: 'DELETE'
+                    });
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    clientesTableBody.removeChild(row);
+                } catch (error) {
+                    console.error('Error al eliminar el cliente:', error);
+                }
+            }
+            if (event.target.classList.contains('editButton')) {
+                document.getElementById('idCliente').value = row.cells[0].textContent;
+                document.getElementById('nombre').value = row.cells[1].textContent;
+                document.getElementById('edad').value = row.cells[2].textContent;
+            }
+        });
+        async function fetchClientes() {
+            try {
+                const response = await fetch('/cliente');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const clientes = await response.json();
+                if (!Array.isArray(clientes)) {
+                    throw new TypeError('La respuesta no es un array');
+                }
+                clientesTableBody.innerHTML = '';
+                clientes.forEach(cliente => {
+                    agregarFilaCliente(cliente);
+                });
+            } catch (error) {
+                console.error('Error al obtener clientes:', error);
+            }
+        }
+        function agregarFilaCliente(cliente) {
+            const newRow = document.createElement('tr');
+            newRow.setAttribute('data-id', cliente.idCliente);
+            newRow.innerHTML = `
+                <td>${cliente.idCliente}</td>
+                <td>${cliente.nombre}</td>
+                <td>${cliente.edad}</td>
+                <td>${cliente.fecha_registro}</td> <!-- Mostrar fecha_registro -->
+                <td>
+                    <button class="btn btn-warning btn-sm editButton">Editar</button>
+                    <button class="btn btn-danger btn-sm deleteButton">Eliminar</button>
+                </td>
+            `;
+            clientesTableBody.appendChild(newRow);
+        }
+        function actualizarFilaCliente(cliente) {
+            const row = document.querySelector(`tr[data-id='${cliente.idCliente}']`);
+            row.innerHTML = `
+                <td>${cliente.idCliente}</td>
+                <td>${cliente.nombre}</td>
+                <td>${cliente.edad}</td>
+                <td>${cliente.fecha_registro}</td> <!-- Mostrar fecha_registro -->
+                <td>
+                    <button class="btn btn-warning btn-sm editButton">Editar</button>
+                    <button class="btn btn-danger btn-sm deleteButton">Eliminar</button>
+                </td>
+            `;
+        }
+        fetchClientes();
+    });
+</script>
+<script>
+    const toggleButton = document.getElementById('toggleButton');
+    const sidebar = document.getElementById('sidebarMenu');
+    const toggleIcon = document.getElementById('toggleIcon');
+    toggleButton.addEventListener('click', () => {
+        sidebar.classList.toggle('collapse');
+        toggleIcon.classList.toggle('bi-chevron-right');
+        toggleIcon.classList.toggle('bi-chevron-left');
+    });
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</body>
+</html>
