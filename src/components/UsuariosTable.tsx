@@ -68,10 +68,9 @@ const UsuariosTable: React.FC = () => {
         nombre: values.nombre,
         correo: values.correo,
         telefono: values.telefono,
-        rol: values.rol,
+        role: values.role,
         activo: values.activo,
         fechaRegistro: editingUsuario ? editingUsuario.fechaRegistro : undefined,
-        contraseña: values.contraseña,
       };
 
       if (editingUsuario) {
@@ -150,7 +149,7 @@ const UsuariosTable: React.FC = () => {
             <Input />
           </Form.Item>
           <Form.Item
-            name="rol"
+            name="role"
             label="Rol"
             rules={[{ required: true, message: "Rol requerido" }]}
           >
@@ -165,13 +164,6 @@ const UsuariosTable: React.FC = () => {
             valuePropName="checked"
           >
             <Switch />
-          </Form.Item>
-          <Form.Item
-            name="contraseña"
-            label="Contraseña"
-            rules={[{ required: true, message: "Contraseña requerida" }]}
-          >
-            <Input.Password />
           </Form.Item>
           <Form.Item>
             <Button type="primary" htmlType="submit">

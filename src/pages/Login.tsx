@@ -17,6 +17,8 @@ const Login = () => {
       });
       const { token, role } = response.data;
       setUser({ token, role });
+      console.log('Logged in as:', role);
+      console.log('Token:', token);
       setError('');
       navigate('/'); // Redirigir al usuario a la página principal después del login
     } catch (error) {
