@@ -10,7 +10,6 @@ const UsuariosTable: React.FC = () => {
   const [editingUsuario, setEditingUsuario] = useState<any>(null);
   const [form] = Form.useForm();
 
-  // Obtén el token JWT del usuario
   const getAuthHeader = () => {
     const user = getUser();
     return user?.token ? { Authorization: `Bearer ${user.token}` } : {};
@@ -70,6 +69,7 @@ const UsuariosTable: React.FC = () => {
         telefono: values.telefono,
         role: values.role,
         activo: values.activo,
+        password: values.password, // Añadir el campo de contraseña
         fechaRegistro: editingUsuario ? editingUsuario.fechaRegistro : undefined,
       };
 
@@ -95,7 +95,7 @@ const UsuariosTable: React.FC = () => {
     { title: "Nombre", dataIndex: "nombre", key: "nombre" },
     { title: "Correo", dataIndex: "correo", key: "correo" },
     { title: "Teléfono", dataIndex: "telefono", key: "telefono" },
-    { title: "Rol", dataIndex: "rol", key: "rol" },
+    { title: "Rol", dataIndex: "role", key: "role" },
     { title: "Activo", dataIndex: "activo", key: "activo", render: (activo: boolean) => (activo ? "Sí" : "No") },
     {
       title: "Acciones",
@@ -164,6 +164,13 @@ const UsuariosTable: React.FC = () => {
             valuePropName="checked"
           >
             <Switch />
+          </Form.Item>
+          <Form.Item
+            name="password"
+            label="Contraseña"
+            rules={[{ required: !editingUsuario, message: "Contraseña requerida" }]}
+          >
+            <Input.Password />
           </Form.Item>
           <Form.Item>
             <Button type="primary" htmlType="submit">

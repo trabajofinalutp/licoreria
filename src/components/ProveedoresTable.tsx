@@ -2,12 +2,22 @@ import React, { useEffect, useState } from "react";
 import { Table, Button, Modal, Form, Input, message } from "antd";
 import axios from "axios";
 import { getUser } from "../types/Usuario";
+import moment from "moment";
+
+interface Proveedor {
+  id_proveedor: number;
+  nombre: string;
+  correo: string;
+  telefono: string;
+  direccion: string;
+  fecha_registro: string;
+}
 
 const ProveedoresTable: React.FC = () => {
-  const [proveedores, setProveedores] = useState([]);
+  const [proveedores, setProveedores] = useState<Proveedor[]>([]);
   const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingProveedor, setEditingProveedor] = useState<any>(null);
+  const [editingProveedor, setEditingProveedor] = useState<Proveedor | null>(null);
   const [form] = Form.useForm();
 
   const getAuthHeader = () => {
@@ -15,10 +25,14 @@ const ProveedoresTable: React.FC = () => {
     return user?.token ? { Authorization: `Bearer ${user.token}` } : {};
   };
 
+  const formatDateTime = (dateTime: string) => {
+    return moment(dateTime).format('YYYY-MM-DD HH:mm:ss');
+  };
+
   const fetchProveedores = async () => {
     setLoading(true);
     try {
-      const { data } = await axios.get("/api/proveedores", {
+      const { data } = await axios.get<Proveedor[]>("/api/proveedores", {
         headers: getAuthHeader(),
       });
       setProveedores(data);
@@ -33,7 +47,7 @@ const ProveedoresTable: React.FC = () => {
     fetchProveedores();
   }, []);
 
-  const openModal = (proveedor: any = null) => {
+  const openModal = (proveedor: Proveedor | null = null) => {
     setEditingProveedor(proveedor);
     if (proveedor) {
       form.setFieldsValue(proveedor);
@@ -65,9 +79,9 @@ const ProveedoresTable: React.FC = () => {
       const proveedorData = {
         id_proveedor: editingProveedor ? editingProveedor.id_proveedor : undefined,
         nombre: values.nombre,
-        direccion: values.direccion,
-        telefono: values.telefono,
         correo: values.correo,
+        telefono: values.telefono,
+        direccion: values.direccion,
         fecha_registro: editingProveedor ? editingProveedor.fecha_registro : undefined,
       };
 
@@ -90,24 +104,28 @@ const ProveedoresTable: React.FC = () => {
   };
 
   const columns = [
-    { title: "ID", dataIndex: "id_proveedor", key: "id_proveedor" },
     { title: "Nombre", dataIndex: "nombre", key: "nombre" },
     { title: "Correo", dataIndex: "correo", key: "correo" },
-    { title: "Dirección", dataIndex: "direccion", key: "direccion" },
     { title: "Teléfono", dataIndex: "telefono", key: "telefono" },
-    { title: "Fecha de Registro", dataIndex: "fecha_registro", key: "fecha_registro" },
+    { title: "Dirección", dataIndex: "direccion", key: "direccion" },
+    { 
+      title: "Fecha de Registro", 
+      dataIndex: "fecha_registro", 
+      key: "fecha_registro",
+      render: (fecha_registro: string) => formatDateTime(fecha_registro)
+    },
     {
       title: "Acciones",
       key: "acciones",
-      render: (record: any) => (
-        <>
+      render: (record: Proveedor) => (
+        <div>
           <Button onClick={() => openModal(record)} type="link">
             Editar
           </Button>
           <Button onClick={() => handleDelete(record.id_proveedor)} type="link" danger>
             Eliminar
           </Button>
-        </>
+        </div>
       ),
     },
   ];
@@ -125,7 +143,7 @@ const ProveedoresTable: React.FC = () => {
       />
       <Modal
         title={editingProveedor ? "Editar Proveedor" : "Agregar Proveedor"}
-        visible={isModalOpen}
+        open={isModalOpen}
         onCancel={closeModal}
         footer={null}
       >
@@ -145,16 +163,16 @@ const ProveedoresTable: React.FC = () => {
             <Input type="email" />
           </Form.Item>
           <Form.Item
-            name="direccion"
-            label="Dirección"
-            rules={[{ required: true, message: "Dirección requerida" }]}
+            name="telefono"
+            label="Teléfono"
+            rules={[{ required: true, message: "Teléfono requerido" }]}
           >
             <Input />
           </Form.Item>
           <Form.Item
-            name="telefono"
-            label="Teléfono"
-            rules={[{ required: true, message: "Teléfono requerido" }]}
+            name="direccion"
+            label="Dirección"
+            rules={[{ required: true, message: "Dirección requerida" }]}
           >
             <Input />
           </Form.Item>

@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { setUser } from '../types/Usuario';
+import { jwtDecode } from 'jwt-decode';
+import { setUser, getUser } from '../types/Usuario';
 
 const Login = () => {
   const [correo, setCorreo] = useState('');
@@ -9,18 +10,40 @@ const Login = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
+  useEffect(() => {
+    const userData = getUser();
+    if (userData?.token) {
+      try {
+        const decodedToken: any = jwtDecode(userData.token);
+        // Check if token is expired
+        if (decodedToken.exp * 1000 > Date.now()) {
+          setUser(userData);
+          navigate('/');
+        } else {
+          setUser(null);
+        }
+      } catch (error) {
+        setUser(null);
+      }
+    }
+  }, [navigate]);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       const response = await axios.post('http://localhost:8083/authenticate', null, {
         params: { correo, password }
       });
-      const { token, role } = response.data;
-      setUser({ token, role });
+      const { token } = response.data;
+      const decodedToken: any = jwtDecode(token);
+      const { role, sub: email } = decodedToken;
+      
+      const userData = { token, role, email };
+      setUser(userData);
       console.log('Logged in as:', role);
-      console.log('Token:', token);
+      console.log('token:', token);
       setError('');
-      navigate('/'); // Redirigir al usuario a la página principal después del login
+      navigate('/');
     } catch (error) {
       setError('Invalid username or password');
     }
