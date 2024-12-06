@@ -5,12 +5,12 @@ import { getUser } from "../types/Usuario";
 import moment from "moment";
 
 interface Proveedor {
-  id_proveedor: number;
+  idProveedor: number;
   nombre: string;
   correo: string;
-  telefono: string;
+  telefono: number;
   direccion: string;
-  fecha_registro: string;
+  fechaRegistro: string;
 }
 
 const ProveedoresTable: React.FC = () => {
@@ -26,7 +26,7 @@ const ProveedoresTable: React.FC = () => {
   };
 
   const formatDateTime = (dateTime: string) => {
-    return moment(dateTime).format('YYYY-MM-DD HH:mm:ss');
+    return moment(dateTime).format('YYYY-MM-DD');
   };
 
   const fetchProveedores = async () => {
@@ -50,7 +50,10 @@ const ProveedoresTable: React.FC = () => {
   const openModal = (proveedor: Proveedor | null = null) => {
     setEditingProveedor(proveedor);
     if (proveedor) {
-      form.setFieldsValue(proveedor);
+      form.setFieldsValue({
+        ...proveedor,
+        telefono: proveedor.telefono.toString()
+      });
     } else {
       form.resetFields();
     }
@@ -77,16 +80,16 @@ const ProveedoresTable: React.FC = () => {
   const handleSave = async (values: any) => {
     try {
       const proveedorData = {
-        id_proveedor: editingProveedor ? editingProveedor.id_proveedor : undefined,
+        idProveedor: editingProveedor ? editingProveedor.idProveedor : undefined,
         nombre: values.nombre,
         correo: values.correo,
-        telefono: values.telefono,
+        telefono: parseInt(values.telefono),
         direccion: values.direccion,
-        fecha_registro: editingProveedor ? editingProveedor.fecha_registro : undefined,
+        fechaRegistro: editingProveedor ? editingProveedor.fechaRegistro : undefined,
       };
 
       if (editingProveedor) {
-        await axios.put(`/api/proveedores/${editingProveedor.id_proveedor}`, proveedorData, {
+        await axios.put(`/api/proveedores/${editingProveedor.idProveedor}`, proveedorData, {
           headers: getAuthHeader(),
         });
         message.success("Proveedor actualizado con éxito");
@@ -110,9 +113,9 @@ const ProveedoresTable: React.FC = () => {
     { title: "Dirección", dataIndex: "direccion", key: "direccion" },
     { 
       title: "Fecha de Registro", 
-      dataIndex: "fecha_registro", 
-      key: "fecha_registro",
-      render: (fecha_registro: string) => formatDateTime(fecha_registro)
+      dataIndex: "fechaRegistro", 
+      key: "fechaRegistro",
+      render: (fechaRegistro: string) => formatDateTime(fechaRegistro)
     },
     {
       title: "Acciones",
@@ -122,7 +125,7 @@ const ProveedoresTable: React.FC = () => {
           <Button onClick={() => openModal(record)} type="link">
             Editar
           </Button>
-          <Button onClick={() => handleDelete(record.id_proveedor)} type="link" danger>
+          <Button onClick={() => handleDelete(record.idProveedor)} type="link" danger>
             Eliminar
           </Button>
         </div>
@@ -138,7 +141,7 @@ const ProveedoresTable: React.FC = () => {
       <Table
         columns={columns}
         dataSource={proveedores}
-        rowKey="id_proveedor"
+        rowKey="idProveedor"
         loading={loading}
       />
       <Modal
@@ -167,7 +170,7 @@ const ProveedoresTable: React.FC = () => {
             label="Teléfono"
             rules={[{ required: true, message: "Teléfono requerido" }]}
           >
-            <Input />
+            <Input type="number" />
           </Form.Item>
           <Form.Item
             name="direccion"

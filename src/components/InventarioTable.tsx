@@ -3,14 +3,15 @@ import { Table, Input, Layout, Menu, message, Space } from "antd";
 import axios from "axios";
 import { getUser } from "../types/Usuario";
 
-const { Content } = Layout; // Remove Sider since we won't use it
+const { Content } = Layout;
 const { Search } = Input;
 
 interface Producto {
+    idProducto: number;
     nombre: string;
     categoria: string;
     descripcion: string;
-    fecha_registro: string;
+    fechaRegistro: string;
     precio: number;
     stock: number;
 }
@@ -26,10 +27,25 @@ const InventarioTable: React.FC = () => {
         return user?.token ? { Authorization: `Bearer ${user.token}` } : {};
     };
 
+    const formatDate = (dateString: string): string => {
+        try {
+            const date = new Date(dateString);
+            return date.toLocaleString('es-PE', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        } catch (error) {
+            return 'Fecha inválida';
+        }
+    };
+
     const fetchProductos = async () => {
         setLoading(true);
         try {
-            const { data } = await axios.get("/api/productos", {
+            const { data } = await axios.get<Producto[]>("/api/productos", {
                 headers: getAuthHeader()
             });
             setAllProductos(data);
@@ -59,15 +75,18 @@ const InventarioTable: React.FC = () => {
         { title: "Descripción", dataIndex: "descripcion", key: "descripcion" },
         { 
             title: "Fecha Registro", 
-            dataIndex: "fecha_registro", 
-            key: "fecha_registro",
-            render: (fecha: string) => new Date(fecha).toLocaleString()
+            dataIndex: "fechaRegistro", 
+            key: "fechaRegistro",
+            render: (fecha: string) => formatDate(fecha)
         },
         { 
             title: "Precio", 
             dataIndex: "precio", 
             key: "precio",
-            render: (precio: number) => `S/${precio.toFixed(2)}`
+            render: (precio: number) => `S/ ${precio.toLocaleString('es-PE', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            })}`
         },
         { title: "Stock", dataIndex: "stock", key: "stock" },
     ];
@@ -99,7 +118,7 @@ const InventarioTable: React.FC = () => {
                 <Table
                     columns={columns}
                     dataSource={filteredProductos}
-                    rowKey="id_producto"
+                    rowKey="idProducto"
                     loading={loading}
                 />
             </Space>

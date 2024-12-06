@@ -1,17 +1,17 @@
 import React, { useEffect, useState } from "react";
-import { Table, Button, Modal, Form, Input, InputNumber, message } from "antd";
+import { Table, Button, Modal, Form, Input, InputNumber, message, Space } from "antd";
 import axios from "axios";
 import { getUser } from "../types/Usuario";
 import moment from "moment";
 
 interface Producto {
-    id_producto: number;
+    idProducto: number;
     nombre: string;
     descripcion: string;
     categoria: string;
     precio: number;
     stock: number;
-    fecha_registro: string;
+    fechaRegistro: string;
 }
 
 const ProductosTable: React.FC = () => {
@@ -19,7 +19,7 @@ const ProductosTable: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingProducto, setEditingProducto] = useState<Producto | null>(null);
-    const [form] = Form.useForm();
+    const [form] = Form.useForm<Producto>();
 
     const getAuthHeader = () => {
         const user = getUser();
@@ -75,20 +75,15 @@ const ProductosTable: React.FC = () => {
         }
     };
 
-    const handleSave = async (values: any) => {
+    const handleSave = async (values: Producto) => {
         try {
-            const productoData = {
-                id_producto: editingProducto ? editingProducto.id_producto : undefined,
-                nombre: values.nombre,
-                descripcion: values.descripcion,
-                categoria: values.categoria,
-                precio: values.precio,
-                stock: values.stock,
-                fecha_registro: editingProducto ? editingProducto.fecha_registro : undefined,
+            const productoData: Partial<Producto> = {
+                ...values,
+                fechaRegistro: editingProducto?.fechaRegistro
             };
 
             if (editingProducto) {
-                await axios.put(`/api/productos/${editingProducto.id_producto}`, productoData, {
+                await axios.put(`/api/productos/${editingProducto.idProducto}`, productoData, {
                     headers: getAuthHeader(),
                 });
                 message.success("Producto actualizado con éxito");
@@ -105,6 +100,36 @@ const ProductosTable: React.FC = () => {
         }
     };
 
+    const handleStockChange = async (producto: Producto, increment: boolean) => {
+        const newStock = producto.stock + (increment ? 1 : -1);
+        
+        if (newStock < 0) {
+            Modal.confirm({
+                title: '¿Eliminar producto?',
+                content: 'El stock quedará en negativo. ¿Desea eliminar el producto?',
+                okText: 'Sí, eliminar',
+                cancelText: 'No',
+                onOk: () => handleDelete(producto.idProducto)
+            });
+            return;
+        }
+    
+        try {
+            const productoData: Partial<Producto> = {
+                ...producto,
+                stock: newStock
+            };
+            
+            await axios.put(`/api/productos/${producto.idProducto}`, productoData, {
+                headers: getAuthHeader(),
+            });
+            message.success("Stock actualizado con éxito");
+            fetchProductos();
+        } catch (error) {
+            message.error("Error al actualizar el stock");
+        }
+    };
+
     const columns = [
         { title: "Nombre", dataIndex: "nombre", key: "nombre" },
         { title: "Descripción", dataIndex: "descripcion", key: "descripcion" },
@@ -115,12 +140,33 @@ const ProductosTable: React.FC = () => {
             key: "precio",
             render: (precio: number) => `S/${precio.toFixed(2)}`
         },
-        { title: "Stock", dataIndex: "stock", key: "stock" },
+        { 
+            title: "Stock", 
+            dataIndex: "stock", 
+            key: "stock",
+            render: (stock: number, record: Producto) => (
+                <Space>
+                    <Button 
+                        onClick={() => handleStockChange(record, false)}
+                        size="small"
+                    >
+                        -
+                    </Button>
+                    <span>{stock}</span>
+                    <Button 
+                        onClick={() => handleStockChange(record, true)}
+                        size="small"
+                    >
+                        +
+                    </Button>
+                </Space>
+            )
+        },
         { 
             title: "Fecha de Registro", 
-            dataIndex: "fecha_registro", 
-            key: "fecha_registro",
-            render: (fecha_registro: string) => formatDateTime(fecha_registro)
+            dataIndex: "fechaRegistro", 
+            key: "fechaRegistro",
+            render: (fechaRegistro: string) => formatDateTime(fechaRegistro)
         },
         {
             title: "Acciones",
@@ -130,7 +176,7 @@ const ProductosTable: React.FC = () => {
                     <Button onClick={() => openModal(record)} type="link">
                         Editar
                     </Button>
-                    <Button onClick={() => handleDelete(record.id_producto)} type="link" danger>
+                    <Button onClick={() => handleDelete(record.idProducto)} type="link" danger>
                         Eliminar
                     </Button>
                 </>
@@ -146,7 +192,7 @@ const ProductosTable: React.FC = () => {
             <Table
                 columns={columns}
                 dataSource={productos}
-                rowKey="id_producto"
+                rowKey="idProducto"
                 loading={loading}
             />
             <Modal
@@ -156,6 +202,9 @@ const ProductosTable: React.FC = () => {
                 footer={null}
             >
                 <Form form={form} onFinish={handleSave} layout="vertical">
+                    <Form.Item name="idProducto" hidden>
+                        <Input />
+                    </Form.Item>
                     <Form.Item
                         name="nombre"
                         label="Nombre"

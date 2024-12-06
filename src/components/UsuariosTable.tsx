@@ -9,6 +9,8 @@ const UsuariosTable: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUsuario, setEditingUsuario] = useState<any>(null);
   const [form] = Form.useForm();
+  const [passwordModified, setPasswordModified] = useState(false);
+  const loggedInUser = getUser(); // Get the current logged in user
 
   const getAuthHeader = () => {
     const user = getUser();
@@ -35,8 +37,12 @@ const UsuariosTable: React.FC = () => {
 
   const openModal = (usuario: any = null) => {
     setEditingUsuario(usuario);
+    setPasswordModified(false);
     if (usuario) {
-      form.setFieldsValue(usuario);
+      form.setFieldsValue({
+        ...usuario,
+        password: '' // Clear password field when editing
+      });
     } else {
       form.resetFields();
     }
@@ -60,6 +66,10 @@ const UsuariosTable: React.FC = () => {
     }
   };
 
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPasswordModified(e.target.value.length > 0);
+  };
+
   const handleSave = async (values: any) => {
     try {
       const usuarioData = {
@@ -69,9 +79,14 @@ const UsuariosTable: React.FC = () => {
         telefono: values.telefono,
         role: values.role,
         activo: values.activo,
-        password: values.password, // Añadir el campo de contraseña
+        password: values.password,
         fechaRegistro: editingUsuario ? editingUsuario.fechaRegistro : undefined,
       };
+
+      // Only include password if it's a new user or if it was modified during edit
+      if (!editingUsuario || passwordModified) {
+        usuarioData.password = values.password;
+      }
 
       if (editingUsuario) {
         await axios.put(`/api/usuarios/${editingUsuario.idUsuario}`, usuarioData, {
@@ -100,16 +115,26 @@ const UsuariosTable: React.FC = () => {
     {
       title: "Acciones",
       key: "acciones",
-      render: (record: any) => (
-        <>
-          <Button onClick={() => openModal(record)} type="link">
-            Editar
-          </Button>
-          <Button onClick={() => handleDelete(record.idUsuario)} type="link" danger>
-            Eliminar
-          </Button>
-        </>
-      ),
+      render: (record: any) => {
+        const isCurrentUser = loggedInUser?.email === record.correo;
+        
+        return (
+          <>
+            <Button onClick={() => openModal(record)} type="link">
+              Editar
+            </Button>
+            <Button 
+              onClick={() => handleDelete(record.idUsuario)} 
+              type="link" 
+              danger
+              disabled={isCurrentUser}
+              title={isCurrentUser ? "No puedes eliminar tu propio usuario" : ""}
+            >
+              Eliminar
+            </Button>
+          </>
+        );
+      },
     },
   ];
 
@@ -168,9 +193,14 @@ const UsuariosTable: React.FC = () => {
           <Form.Item
             name="password"
             label="Contraseña"
-            rules={[{ required: !editingUsuario, message: "Contraseña requerida" }]}
+            rules={[
+              { 
+                required: !editingUsuario,
+                message: "Contraseña requerida para nuevo usuario" 
+              }
+            ]}
           >
-            <Input.Password />
+            <Input.Password onChange={handlePasswordChange} />
           </Form.Item>
           <Form.Item>
             <Button type="primary" htmlType="submit">

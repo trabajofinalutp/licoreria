@@ -9,7 +9,7 @@ import {
   LogoutOutlined,
   ShoppingOutlined // Import the icon for productos
 } from '@ant-design/icons';
-import { clearUser } from "../types/Usuario";
+import { clearUser, getUser } from "../types/Usuario";
 
 const { Sider } = Layout;
 
@@ -40,11 +40,12 @@ const Sidebar: React.FC = () => {
       icon: <TeamOutlined />,
       label: <Link to="/proveedores">Proveedores</Link>,
     },
-    {
+    // Only show Usuarios menu item for admin users
+    ...(getUser()?.role === 'ROLE_ADMIN' ? [{
       key: "/usuarios",
       icon: <UserOutlined />,
       label: <Link to="/usuarios">Usuarios</Link>,
-    },
+    }] : []),
     {
       key: "/productos",
       icon: <ShoppingOutlined />, // Add the icon for productos
