@@ -3,6 +3,7 @@ import { Table, Button, Modal, Form, Input, InputNumber, message, Space } from "
 import axios from "axios";
 import { getUser } from "../types/Usuario";
 import moment from "moment";
+import { useAuth } from "../hooks/useAuth";
 
 interface Producto {
     idProducto: number;
@@ -20,6 +21,7 @@ const ProductosTable: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingProducto, setEditingProducto] = useState<Producto | null>(null);
     const [form] = Form.useForm<Producto>();
+    const { checkAuth } = useAuth();
 
     const getAuthHeader = () => {
         const user = getUser();
@@ -33,9 +35,9 @@ const ProductosTable: React.FC = () => {
     const fetchProductos = async () => {
         setLoading(true);
         try {
-            const { data } = await axios.get<Producto[]>("/api/productos", {
+            const { data } = await checkAuth(axios.get<Producto[]>("/api/productos", {
                 headers: getAuthHeader(),
-            });
+            }));
             setProductos(data);
         } catch (error) {
             message.error("Error al cargar los productos");
@@ -65,9 +67,9 @@ const ProductosTable: React.FC = () => {
 
     const handleDelete = async (id: number) => {
         try {
-            await axios.delete(`/api/productos/${id}`, {
+            await checkAuth(axios.delete(`/api/productos/${id}`, {
                 headers: getAuthHeader(),
-            });
+            }));
             message.success("Producto eliminado con éxito");
             fetchProductos();
         } catch (error) {
@@ -83,14 +85,14 @@ const ProductosTable: React.FC = () => {
             };
 
             if (editingProducto) {
-                await axios.put(`/api/productos/${editingProducto.idProducto}`, productoData, {
+                await checkAuth(axios.put(`/api/productos/${editingProducto.idProducto}`, productoData, {
                     headers: getAuthHeader(),
-                });
+                }));
                 message.success("Producto actualizado con éxito");
             } else {
-                await axios.post("/api/productos", productoData, {
+                await checkAuth(axios.post("/api/productos", productoData, {
                     headers: getAuthHeader(),
-                });
+                }));
                 message.success("Producto creado con éxito");
             }
             closeModal();
@@ -120,9 +122,9 @@ const ProductosTable: React.FC = () => {
                 stock: newStock
             };
             
-            await axios.put(`/api/productos/${producto.idProducto}`, productoData, {
+            await checkAuth(axios.put(`/api/productos/${producto.idProducto}`, productoData, {
                 headers: getAuthHeader(),
-            });
+            }));
             message.success("Stock actualizado con éxito");
             fetchProductos();
         } catch (error) {

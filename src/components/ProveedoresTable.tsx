@@ -3,6 +3,7 @@ import { Table, Button, Modal, Form, Input, message } from "antd";
 import axios from "axios";
 import { getUser } from "../types/Usuario";
 import moment from "moment";
+import { useAuth } from "../hooks/useAuth";
 
 interface Proveedor {
   idProveedor: number;
@@ -19,6 +20,7 @@ const ProveedoresTable: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProveedor, setEditingProveedor] = useState<Proveedor | null>(null);
   const [form] = Form.useForm();
+  const { checkAuth } = useAuth();
 
   const getAuthHeader = () => {
     const user = getUser();
@@ -32,9 +34,9 @@ const ProveedoresTable: React.FC = () => {
   const fetchProveedores = async () => {
     setLoading(true);
     try {
-      const { data } = await axios.get<Proveedor[]>("/api/proveedores", {
+      const { data } = await checkAuth(axios.get<Proveedor[]>("/api/proveedores", {
         headers: getAuthHeader(),
-      });
+      }));
       setProveedores(data);
     } catch (error) {
       message.error("Error al cargar los proveedores");
@@ -67,9 +69,9 @@ const ProveedoresTable: React.FC = () => {
 
   const handleDelete = async (id: number) => {
     try {
-      await axios.delete(`/api/proveedores/${id}`, {
+      await checkAuth(axios.delete(`/api/proveedores/${id}`, {
         headers: getAuthHeader(),
-      });
+      }));
       message.success("Proveedor eliminado con éxito");
       fetchProveedores();
     } catch (error) {
@@ -89,14 +91,14 @@ const ProveedoresTable: React.FC = () => {
       };
 
       if (editingProveedor) {
-        await axios.put(`/api/proveedores/${editingProveedor.idProveedor}`, proveedorData, {
+        await checkAuth(axios.put(`/api/proveedores/${editingProveedor.idProveedor}`, proveedorData, {
           headers: getAuthHeader(),
-        });
+        }));
         message.success("Proveedor actualizado con éxito");
       } else {
-        await axios.post("/api/proveedores", proveedorData, {
+        await checkAuth(axios.post("/api/proveedores", proveedorData, {
           headers: getAuthHeader(),
-        });
+        }));
         message.success("Proveedor creado con éxito");
       }
       closeModal();

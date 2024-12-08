@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Table, Input, Layout, Menu, message, Space } from "antd";
 import axios from "axios";
 import { getUser } from "../types/Usuario";
+import { useAuth } from "../hooks/useAuth";
 
 const { Content } = Layout;
 const { Search } = Input;
@@ -21,6 +22,7 @@ const InventarioTable: React.FC = () => {
     const [filteredProductos, setFilteredProductos] = useState<Producto[]>([]);
     const [loading, setLoading] = useState(false);
     const [searchField, setSearchField] = useState("nombre");
+    const { checkAuth } = useAuth();
 
     const getAuthHeader = () => {
         const user = getUser();
@@ -45,9 +47,9 @@ const InventarioTable: React.FC = () => {
     const fetchProductos = async () => {
         setLoading(true);
         try {
-            const { data } = await axios.get<Producto[]>("/api/productos", {
+            const { data } = await checkAuth(axios.get<Producto[]>("/api/productos", {
                 headers: getAuthHeader()
-            });
+            }));
             setAllProductos(data);
             setFilteredProductos(data);
         } catch (error) {

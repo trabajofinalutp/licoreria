@@ -8,6 +8,8 @@ import Login from './pages/Login'
 import Proveedores from './pages/Proveedores'
 import Productos from './pages/Productos'
 import Inventario from './pages/Inventario'
+import Ventas from './pages/Ventas'
+import DetalleVenta from './pages/DetalleVenta'
 import ProtectedRoute from './components/ProtectedRoute'
 
 createRoot(document.getElementById('root')!).render(
@@ -52,6 +54,22 @@ createRoot(document.getElementById('root')!).render(
           element={
             <ProtectedRoute>
               <Inventario />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/ventas" 
+          element={
+            <ProtectedRoute>
+              <Ventas />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/detalleventa" 
+          element={
+            <ProtectedRoute>
+              <DetalleVenta />
             </ProtectedRoute>
           } 
         />

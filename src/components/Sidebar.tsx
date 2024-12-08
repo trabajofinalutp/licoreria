@@ -7,7 +7,9 @@ import {
   TeamOutlined, 
   UserOutlined, 
   LogoutOutlined,
-  ShoppingOutlined // Import the icon for productos
+  ShoppingOutlined, // Import the icon for productos
+  ShoppingCartOutlined, // Add this import for ventas
+  FileTextOutlined // Import this icon from antd
 } from '@ant-design/icons';
 import { clearUser, getUser } from "../types/Usuario";
 
@@ -50,6 +52,16 @@ const Sidebar: React.FC = () => {
       key: "/productos",
       icon: <ShoppingOutlined />, // Add the icon for productos
       label: <Link to="/productos">Productos</Link>, // Add the link for productos
+    },
+    {
+      key: "/ventas",
+      icon: <ShoppingCartOutlined />,
+      label: <Link to="/ventas">Ventas</Link>,
+    },
+    {
+      key: "/detalleventa",
+      icon: <FileTextOutlined />, // Import this icon from antd
+      label: <Link to="/detalleventa">Detalle Ventas</Link>,
     },
     {
       key: "logout",

@@ -1,12 +1,29 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Layout } from 'antd';
 import Sidebar from '../components/Sidebar';
 import { getUser } from '../types/Usuario';
+import { useAuth } from '../hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
 
 const { Content, Footer } = Layout;
 
 const Home = () => {
+  const { checkAuth } = useAuth();
+  const navigate = useNavigate();
   const user = getUser();
+
+  useEffect(() => {
+    const validateAuth = async () => {
+      try {
+        // Simple auth check - will redirect if token is invalid
+        await checkAuth(Promise.resolve());
+      } catch (error) {
+        navigate('/login');
+      }
+    };
+
+    validateAuth();
+  }, []);
 
   if (!user) {
     return <p>No estás autenticado. Por favor, inicia sesión.</p>;
@@ -14,10 +31,7 @@ const Home = () => {
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
-      {/* Barra lateral (Sider) con el nuevo componente Sidebar */}
       <Sidebar />
-
-      {/* Contenido principal del layout */}
       <Layout style={{ padding: '24px' }}>
         <Content
           style={{
@@ -33,8 +47,6 @@ const Home = () => {
           <p>Selecciona una opción en el menú para comenzar.</p>
           <img src="https://i.gifer.com/SU1.gif" alt="Bienvenido" />
         </Content>
-
-        {/* Pie de página */}
         <Footer style={{ textAlign: 'center' }}>© 2024 Gestión de Bodega</Footer>
       </Layout>
     </Layout>

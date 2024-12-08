@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Table, Button, Modal, Form, Input, Select, Switch, message } from "antd";
 import axios from "axios";
 import { getUser } from "../types/Usuario"; // Importar la función para obtener el usuario
+import { useAuth } from "../hooks/useAuth";
 
 const UsuariosTable: React.FC = () => {
   const [usuarios, setUsuarios] = useState([]);
@@ -11,6 +12,7 @@ const UsuariosTable: React.FC = () => {
   const [form] = Form.useForm();
   const [passwordModified, setPasswordModified] = useState(false);
   const loggedInUser = getUser(); // Get the current logged in user
+  const { checkAuth } = useAuth();
 
   const getAuthHeader = () => {
     const user = getUser();
@@ -20,9 +22,9 @@ const UsuariosTable: React.FC = () => {
   const fetchUsuarios = async () => {
     setLoading(true);
     try {
-      const { data } = await axios.get("/api/usuarios", {
+      const { data } = await checkAuth(axios.get("/api/usuarios", {
         headers: getAuthHeader(),
-      });
+      }));
       setUsuarios(data);
     } catch (error) {
       message.error("Error al cargar los usuarios");
@@ -56,9 +58,9 @@ const UsuariosTable: React.FC = () => {
 
   const handleDelete = async (id: number) => {
     try {
-      await axios.delete(`/api/usuarios/${id}`, {
+      await checkAuth(axios.delete(`/api/usuarios/${id}`, {
         headers: getAuthHeader(),
-      });
+      }));
       message.success("Usuario eliminado con éxito");
       fetchUsuarios();
     } catch (error) {
@@ -89,14 +91,14 @@ const UsuariosTable: React.FC = () => {
       }
 
       if (editingUsuario) {
-        await axios.put(`/api/usuarios/${editingUsuario.idUsuario}`, usuarioData, {
+        await checkAuth(axios.put(`/api/usuarios/${editingUsuario.idUsuario}`, usuarioData, {
           headers: getAuthHeader(),
-        });
+        }));
         message.success("Usuario actualizado con éxito");
       } else {
-        await axios.post("/api/usuarios", usuarioData, {
+        await checkAuth(axios.post("/api/usuarios", usuarioData, {
           headers: getAuthHeader(),
-        });
+        }));
         message.success("Usuario creado con éxito");
       }
       closeModal();
