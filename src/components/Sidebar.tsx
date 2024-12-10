@@ -42,7 +42,6 @@ const Sidebar: React.FC = () => {
       icon: <TeamOutlined />,
       label: <Link to="/proveedores">Proveedores</Link>,
     },
-    // Only show Usuarios menu item for admin users
     ...(getUser()?.role === 'ROLE_ADMIN' ? [{
       key: "/usuarios",
       icon: <UserOutlined />,
@@ -50,8 +49,8 @@ const Sidebar: React.FC = () => {
     }] : []),
     {
       key: "/productos",
-      icon: <ShoppingOutlined />, // Add the icon for productos
-      label: <Link to="/productos">Productos</Link>, // Add the link for productos
+      icon: <ShoppingOutlined />,
+      label: <Link to="/productos">Productos</Link>, 
     },
     {
       key: "/ventas",
@@ -60,7 +59,7 @@ const Sidebar: React.FC = () => {
     },
     {
       key: "/detalleventa",
-      icon: <FileTextOutlined />, // Import this icon from antd
+      icon: <FileTextOutlined />, 
       label: <Link to="/detalleventa">Detalle Ventas</Link>,
     },
     {

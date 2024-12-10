@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Table, Button, Select, InputNumber, Space, message, Card } from "antd";
+import moment from "moment";
 import axios from "axios";
 import { getUser } from "../types/Usuario";
-import moment from "moment";
 import { useAuth } from "../hooks/useAuth";
 
 interface Producto {
@@ -20,26 +20,10 @@ interface CartItem {
     subtotal: number;
 }
 
-// Updated interfaces
 interface VentaRequest {
-    fecha_venta: string;
-    metodo_pago: string;
+    fechaVenta: string;
+    metodoPago: string;
     total: number;
-}
-
-interface VentaResponse {
-    id_venta: number;
-    fecha_venta: string;
-    metodo_pago: string;
-    total: number;
-}
-
-interface DetalleVentaRequest {
-    cantidad: number;
-    precio_unitario: number;
-    subtotal: number;
-    id_producto: number;
-    id_venta: number;
 }
 
 const VentasTable: React.FC = () => {
@@ -51,9 +35,7 @@ const VentasTable: React.FC = () => {
     const [total, setTotal] = useState<number>(0);
     const [metodoPago, setMetodoPago] = useState<string>("EFECTIVO");
     const [availableStock, setAvailableStock] = useState<Record<number, number>>({});
-    const { checkAuth } = useAuth();
 
-    // Payment methods options
     const metodoPagoOptions = [
         { value: "EFECTIVO", label: "Efectivo" },
         { value: "TARJETA", label: "Tarjeta" },
@@ -61,28 +43,30 @@ const VentasTable: React.FC = () => {
         { value: "PLIN", label: "Plin" }
     ];
 
+    const { checkAuth } = useAuth();
+    
     const getAuthHeader = () => {
         const user = getUser();
         return user?.token ? { Authorization: `Bearer ${user.token}` } : {};
     };
 
+    useEffect(() => {
+        fetchProductos();
+    }, []);
+
     const fetchProductos = async () => {
         setIsLoading(true);
         try {
             const { data } = await checkAuth(axios.get<Producto[]>("/api/productos", {
-                headers: getAuthHeader(),
+                headers: getAuthHeader()
             }));
-            setProductos(data.filter((p: Producto) => p.stock > 0));
+            setProductos(data);
         } catch (error) {
             message.error("Error al cargar los productos");
         } finally {
             setIsLoading(false);
         }
     };
-
-    useEffect(() => {
-        fetchProductos();
-    }, []);
 
     useEffect(() => {
         const newTotal = cartItems.reduce((sum, item) => sum + item.subtotal, 0);
@@ -165,46 +149,72 @@ const VentasTable: React.FC = () => {
 
         setIsLoading(true);
         try {
-            const ventaData: VentaRequest = {
-                fecha_venta: moment().format('YYYY-MM-DD HH:mm:ss'),
-                metodo_pago: metodoPago,
+            // 1. Create sale
+            const ventaData = {
+                fechaVenta: moment().format('YYYY-MM-DDTHH:mm:ss'),
+                metodoPago: metodoPago,
                 total: total
             };
 
-            const { data: ventaResponse } = await checkAuth(axios.post<VentaResponse>(
-                "/api/ventas",
-                ventaData,
-                { headers: getAuthHeader() }
-            ));
+            const ventaResponse = await checkAuth(axios.post("/api/ventas", ventaData, {
+                headers: getAuthHeader()
+            }));
 
-            for (const item of cartItems) {
-                try {
-                    const detalleData: DetalleVentaRequest = {
-                        cantidad: item.cantidad,
-                        precio_unitario: item.precio,
-                        subtotal: item.subtotal,
-                        id_producto: item.idProducto,
-                        id_venta: ventaResponse.id_venta
-                    };
+            const idVenta = ventaResponse.data.idVenta;
 
-                    await checkAuth(axios.post(
-                        "/api/detalleventas",
-                        detalleData,
-                        { headers: getAuthHeader() }
-                    ));
-                } catch (error) {
-                    throw new Error(`Error al procesar detalle de venta: ${error}`);
-                }
-            }
+            // 2. Create sale details
+            const detallesPromises = cartItems.map(item => {
+                const detalleData = {
+                    venta: {
+                        idVenta: idVenta,
+                        fechaVenta: moment().format('YYYY-MM-DDTHH:mm:ss'),
+                        total: total,
+                        metodoPago: metodoPago
+                    },
+                    producto: {
+                        idProducto: item.idProducto,
+                        nombre: item.nombre,
+                        precio: item.precio,
+                        stock: availableStock[item.idProducto] - item.cantidad
+                    },
+                    cantidad: item.cantidad,
+                    precioUnitario: item.precio,
+                    subtotal: item.subtotal
+                };
+
+                return checkAuth(axios.post("/api/detalleventas", detalleData, {
+                    headers: getAuthHeader()
+                }));
+            });
+
+            await Promise.all(detallesPromises);
+
+            // 3. Update products stock
+            const updateStockPromises = cartItems.map(item => {
+                const currentProduct = productos.find(p => p.idProducto === item.idProducto);
+                if (!currentProduct) return Promise.resolve();
+
+                const updatedProduct = {
+                    ...currentProduct,
+                    stock: availableStock[item.idProducto] - item.cantidad
+                };
+
+                return checkAuth(axios.put(`/api/productos/${item.idProducto}`, updatedProduct, {
+                    headers: getAuthHeader()
+                }));
+            });
+
+            await Promise.all(updateStockPromises);
 
             message.success("Venta generada con éxito");
             setCartItems([]);
             setMetodoPago("EFECTIVO");
+            
+            // 4. Refresh products list
             fetchProductos();
-
-        } catch (error: any) {
-            console.error('Error:', error);
-            message.error(error.response?.data?.message || "Error al procesar la venta");
+        } catch (error) {
+            message.error("Error al generar la venta");
+            console.error("Error:", error);
         } finally {
             setIsLoading(false);
         }
