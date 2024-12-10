@@ -7,9 +7,9 @@ import {
   TeamOutlined, 
   UserOutlined, 
   LogoutOutlined,
-  ShoppingOutlined, // Import the icon for productos
-  ShoppingCartOutlined, // Add this import for ventas
-  FileTextOutlined // Import this icon from antd
+  ShoppingOutlined, 
+  ShoppingCartOutlined, 
+  FileTextOutlined 
 } from '@ant-design/icons';
 import { clearUser, getUser } from "../types/Usuario";
 
@@ -80,6 +80,42 @@ const Sidebar: React.FC = () => {
 
   return (
     <Sider collapsible collapsed={collapsed} onCollapse={setCollapsed}>
+      <div style={{
+        height: collapsed ? '60px' : '180px', // Reduced height
+        marginTop: '16px', // Keep top margin
+        marginLeft: '16px',
+        marginRight: '16px',
+        marginBottom: '8px', // Reduced bottom margin
+        background: 'rgba(255, 255, 255, 0.1)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'flex-start', // Align content to top
+        borderRadius: '8px',
+        overflow: 'hidden',
+        transition: 'all 0.3s',
+        paddingTop: '16px' // Add top padding for content
+      }}>
+        <img 
+          src="https://i.gifer.com/SU1.gif" 
+          alt="Logo"
+          style={{
+            width: collapsed ? '40px' : '100px',
+            height: collapsed ? '40px' : '100px',
+            objectFit: 'contain',
+            transition: 'all 0.3s'
+          }}
+        />
+        <span style={{
+          color: '#fff',
+          marginTop: '8px',
+          fontSize: collapsed ? '12px' : '16px',
+          opacity: collapsed ? 0 : 1,
+          transition: 'all 0.3s'
+        }}>
+          El buen beber
+        </span>
+      </div>
       <Menu
         theme="dark"
         mode="inline"

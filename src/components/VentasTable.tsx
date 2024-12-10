@@ -147,6 +147,19 @@ const VentasTable: React.FC = () => {
             return;
         }
 
+        // Validate stock levels before proceeding
+        for (const item of cartItems) {
+            const currentStock = availableStock[item.idProducto];
+            if (currentStock < item.cantidad) {
+                message.error(`Stock insuficiente para ${item.nombre}. Stock disponible: ${currentStock}`);
+                return;
+            }
+            if (currentStock - item.cantidad < 0) {
+                message.error(`La venta dejaría stock negativo para ${item.nombre}`);
+                return;
+            }
+        }
+
         setIsLoading(true);
         try {
             // 1. Create sale
@@ -162,8 +175,11 @@ const VentasTable: React.FC = () => {
 
             const idVenta = ventaResponse.data.idVenta;
 
-            // 2. Create sale details
+            // 2. Create sale details with validated stock
             const detallesPromises = cartItems.map(item => {
+                const currentStock = availableStock[item.idProducto];
+                const newStock = Math.max(0, currentStock - item.cantidad); // Ensure stock never goes below 0
+
                 const detalleData = {
                     venta: {
                         idVenta: idVenta,
@@ -175,7 +191,7 @@ const VentasTable: React.FC = () => {
                         idProducto: item.idProducto,
                         nombre: item.nombre,
                         precio: item.precio,
-                        stock: availableStock[item.idProducto] - item.cantidad
+                        stock: newStock
                     },
                     cantidad: item.cantidad,
                     precioUnitario: item.precio,
@@ -189,14 +205,15 @@ const VentasTable: React.FC = () => {
 
             await Promise.all(detallesPromises);
 
-            // 3. Update products stock
+            // 3. Update products stock with validation
             const updateStockPromises = cartItems.map(item => {
                 const currentProduct = productos.find(p => p.idProducto === item.idProducto);
                 if (!currentProduct) return Promise.resolve();
 
+                const newStock = Math.max(0, availableStock[item.idProducto] - item.cantidad);
                 const updatedProduct = {
                     ...currentProduct,
-                    stock: availableStock[item.idProducto] - item.cantidad
+                    stock: newStock
                 };
 
                 return checkAuth(axios.put(`/api/productos/${item.idProducto}`, updatedProduct, {
